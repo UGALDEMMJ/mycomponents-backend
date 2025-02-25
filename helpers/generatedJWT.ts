@@ -1,4 +1,4 @@
-import { load } from "https://deno.land/std/dotenv/mod.ts";
+import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 import {create, getNumericDate } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 
 async function getKey(secret:string):Promise<CryptoKey> {
@@ -17,6 +17,9 @@ async function getKey(secret:string):Promise<CryptoKey> {
 const  generateJWT = async (id:string) => {
 
     const env = await load();
+    if (!env.SECRET) {
+        throw new Error("SECRET key is not defined in the environment.");
+    }
     const secretKey = await getKey(env.SECRET);
 
     return await create(
@@ -27,4 +30,4 @@ const  generateJWT = async (id:string) => {
 } 
 
 
-export { generateJWT}
+export { generateJWT, getKey}

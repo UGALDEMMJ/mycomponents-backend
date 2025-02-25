@@ -1,43 +1,40 @@
-import { Client } from "https://deno.land/x/postgres/mod.ts";
 import { load } from "https://deno.land/std/dotenv/mod.ts";
+import { Pool } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 
-let clientGLOBAL:Client;
+
+let pool: Pool;
 
 async function connectDB() {
 
     const env = await load();
 
     try {
-        const client = new Client ({
+        pool = new Pool ({
             user: env.DB_USER,
             password: env.DB_PASSWORD,
             hostname: env.DB_HOST,
             port: env.DB_PORT,
             database: env.DB_NAME
-        });
-        //Conectar a la db
-        clientGLOBAL = client;
-        await client.connect();
-        const result = await client.queryObject("SELECT * FROM users");
-        console.log(result.rows);
+        }, 10);
+        console.log("Conectado a la db con 10 pools")
     } catch (error) {
         console.log("Unable to connect to databse: " + error);
         Deno.exit(1);
     }
 }
 
-function getClient(){
-    if(!clientGLOBAL){
-        throw new Error("DataBase not connected")
+async function getClient(){
+    if(!pool){
+        throw new Error("The databse is not connected")
     }
-    return clientGLOBAL;
+    return await pool.connect();
 }
 
 // Función para cerrar la conexión (opcional, pero útil)
 async function disconnectDB() {
-    if (clientGLOBAL) {
-        await clientGLOBAL.end();
-        console.log("Conexión a la base de datos cerrada.");
+    if(pool){
+        await pool.end();
+        console.log("Pool of conection closed")
     }
 }
 

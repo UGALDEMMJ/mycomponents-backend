@@ -1,4 +1,4 @@
-export interface component{
+export interface Component{
     id:string;
     user_id:string;
     category_id:string | null;

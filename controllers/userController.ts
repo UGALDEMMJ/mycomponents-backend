@@ -1,12 +1,36 @@
 import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { RouterContext } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { getClient } from "../config/db.ts";
-import { user } from "../models/User.ts";
+import { User } from "../models/User.ts";
 import { hashPassword } from "../helpers/hashearPassword.ts";
-import { disconnectDB } from "../config/db.ts";
 import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { generateJWT } from "../helpers/generatedJWT.ts";
 
+//Extend del modelo de user
+interface State {
+  user? : User
+}
+
+//Funcion que me devuelve la info del user
+const getProfile =(ctx:Context<State>)=>{
+  if(!ctx.state.user){
+    ctx.response.status = 401;
+    ctx.response.body = { msg: "No autorizado"}
+    return
+  }
+
+  //Enviar datos del user
+  ctx.response.body ={
+    id: ctx.state.user.id,
+    name: ctx.state.user.name,
+    email: ctx.state.user.email,
+    password: ctx.state.user.password,
+    created_at: ctx.state.user.created_at,
+    token: ctx.state.user.token,
+    confirmed: ctx.state.user.confirmed
+  }
+}
+//Inicia el proceso de signup y evita duplicados
 const signupUser = async (ctx: Context) => {
   const body = await ctx.request.body.json();
 
@@ -29,24 +53,24 @@ const signupUser = async (ctx: Context) => {
     console.error("An error has occur sign up the user", error);
   }
 };
-
 //This method find a user in the db depending of the param
-const findUser = async (param: string): Promise<user | null> => {
+const findUser = async (param: string): Promise<User | null> => {
+  let client;
   try {
-    const client = getClient();
+    client = await getClient();
 
     if (!client) {
       throw new Error("Database client is not available.");
     }
 
-    const result = await client.queryObject(
-      `SELECT email, name, token FROM users WHERE email = $1 LIMIT 1`,
+    const result = await client.queryObject<User>(
+      `SELECT id, email, name, password, created_at, token, confirmed FROM users WHERE email = $1 LIMIT 1`,
       [param],
     );
 
     if (result.rows.length > 0) {
-      const dbUser = result.rows[0] as user;
-      const user: user = {
+      const dbUser = result.rows[0];
+      const user: User = {
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
@@ -62,12 +86,15 @@ const findUser = async (param: string): Promise<user | null> => {
   } catch (error) {
     console.error("Error finding the user", error);
     return null;
+  }finally{
+    client?.release();
   }
 };
-
-const attempSignup = async (userData: user) => {
+//Continua el proceso signup y inserta al user en el db
+const attempSignup = async (userData: User) => {
+  let client;
   try {
-    const client = getClient();
+    client = await getClient();
     const newUser = { ...userData };
     newUser.password = await hashPassword(userData.password);
     newUser.created_at = new Date();
@@ -86,13 +113,11 @@ const attempSignup = async (userData: user) => {
     return null;
   } finally {
     console.log("User has been successfully added");
-
-    disconnectDB();
+    client?.release();
   }
 };
 //Verifica el usuario
 const verifyUser = async (ctx: RouterContext<"/verify/:token">) => {
-  const client = getClient();
   const token = ctx.params.token || "";
   console.log("Token recibido:", token);
   const verifyUser = findUser(token);
@@ -101,8 +126,9 @@ const verifyUser = async (ctx: RouterContext<"/verify/:token">) => {
     ctx.response.body = { msg: "Token no valid" };
     return;
   }
-
+  let client;
   try {
+    client = await getClient();
     await client.queryObject(
       `
         UPDATE users SET token = NULL, confirmed = TRUE WHERE token = $1
@@ -115,25 +141,30 @@ const verifyUser = async (ctx: RouterContext<"/verify/:token">) => {
     console.error(error);
     ctx.response.status = 500;
     ctx.response.body = { msg: "Inside error in the server" };
+  }finally{
+    client?.release();
   }
 };
-//Autentica y genera el token
+//Autentica y genera el token(Login)
 const authUser = async (ctx: Context) => {
   try {
     const body = await ctx.request.body.json();
 
     const { email, password } = body;
 
-    const user: user | null = await findUser(email);
-
+    const user: User | null = await findUser(email);
+    console.log(user)
     if (!user) {
       ctx.response.body = { msg: "User does not exist" };
       ctx.response.status = 403;
+      return
     } else {
+      console.log(user)
       const correctPassword = await compare(password, user.password);
       if (!correctPassword) {
         ctx.response.status = 403;
         ctx.response.body = { msg: "The password is incorrect" };
+        return
       }
 
       ctx.response.body = {
@@ -149,9 +180,4 @@ const authUser = async (ctx: Context) => {
     ctx.response.body = { msg: "Error in auth process" };
   }
 };
-
-// const verifyToken = async(ctx)=>{
-
-// }
-
-export { signupUser, verifyUser, authUser };
+export { signupUser, verifyUser, authUser, getProfile, };

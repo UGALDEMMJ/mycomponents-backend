@@ -1,12 +1,21 @@
 import { connectDB } from "./config/db.ts";
 import {Application} from "https://deno.land/x/oak@v17.1.4/mod.ts";
-import { router } from "./routes/userRoutes.ts";
+import { routerUsers } from "./routes/userRoutes.ts";
+import { routerComponents } from "./routes/componentsRoutes.ts"
+import { routerCategories } from "./routes/categoryRoutes.ts";
+import { routerTags } from "./routes/tagsRoutes.ts";
 
 try {
     connectDB();
     const app = new Application();
-    app.use(router.routes());
-    app.use(router.allowedMethods());
+    app.use(routerUsers.routes());
+    app.use(routerUsers.allowedMethods());
+    app.use(routerComponents.routes());
+    app.use(routerComponents.allowedMethods());
+    app.use(routerCategories.routes());
+    app.use(routerCategories.allowedMethods());
+    app.use(routerTags.routes());
+    app.use(routerTags.allowedMethods());
     console.log(`Server started on port 8000`);
     await app.listen({port: 8000});
 } catch (error) {
