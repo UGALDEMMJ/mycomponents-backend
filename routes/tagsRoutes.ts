@@ -1,10 +1,12 @@
 import { Router } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { checkAuth } from "../middleware/authMiddleware.ts";
-import { addTags, updateTag, deleteTag } from "../controllers/tagsController.ts"; 
+import { addTags, updateTag, deleteTag, getTags } from "../controllers/tagsController.ts"; 
 
 const routerTags = new Router({prefix: "/api/tags"});
 
-
+//Rutas publicas
+routerTags
+.post('/dashboard', getTags)
 
 //Rutas privadas
 routerTags

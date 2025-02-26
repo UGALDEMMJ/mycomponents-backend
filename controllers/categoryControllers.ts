@@ -156,4 +156,28 @@ const deleteCategory = async (ctx:Context)=>{
   }
 }
 
-export { addCategories, updateCategory, deleteCategory };
+const getCategory = async (): Promise<Category[] | null> => {
+  let client;
+  try {
+    client = await getClient();
+    const result = await client.queryObject<Category>(
+      `SELECT * FROM tags LIMIT 10`,
+    );
+    if (result.rows.length > 0) {
+      return result.rows.map((dbCategory) => ({
+        id: dbCategory.id,
+        name: dbCategory.name,
+        created_at: dbCategory.created_at,
+      }));
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.log("Error finding the category", error);
+    return null;
+  } finally {
+    client?.release();
+  }
+};
+
+export { addCategories, updateCategory, deleteCategory, getCategory };

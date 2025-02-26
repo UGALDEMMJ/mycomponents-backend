@@ -152,4 +152,27 @@ const deleteTag= async (ctx:Context)=>{
   }
 }
 
-export { addTags, updateTag, deleteTag };
+const getTags = async (): Promise<Tags[] | null> => {
+  let client;
+  try {
+    client = await getClient();
+    const result = await client.queryObject<Tags>(
+      `SELECT * FROM tags LIMIT 10`,
+    );
+    if (result.rows.length > 0) {
+      return result.rows.map((dbTag) => ({
+        id: dbTag.id,
+        name: dbTag.name
+      }));
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.log("Error finding the tag", error);
+    return null;
+  } finally {
+    client?.release();
+  }
+};
+
+export { addTags, updateTag, deleteTag, getTags };
