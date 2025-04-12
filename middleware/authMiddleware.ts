@@ -8,12 +8,12 @@ import { getClient } from "../config/db.ts";
 export const checkAuth = async (ctx: Context, next: Next) => {
   let token;
   let client;
-  const auhHeader = ctx.request.headers.get("Authorization");
+  const authHeader = ctx.request.headers.get("Authorization");
 
-  if (auhHeader && auhHeader.startsWith("Bearer")) {
+  if (authHeader && authHeader.startsWith("Bearer")) {
     try {
       //Extraer el token del header
-      token = auhHeader.split(" ")[1];
+      token = authHeader.split(" ")[1];
 
       //Verificar el token
       const env = await load();

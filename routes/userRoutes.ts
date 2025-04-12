@@ -5,7 +5,7 @@ const routerUsers = new Router({prefix: "/api/user"});
 
 //Rutas publicas
 routerUsers
-.post('/secretsignup',signupUser)
+.post('/signup',signupUser)
 .get('/verify/:token',verifyUser)
 .post('/login',authUser)
 

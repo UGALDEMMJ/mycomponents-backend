@@ -5,6 +5,7 @@ import { User } from "../models/User.ts";
 import { hashPassword } from "../helpers/hashearPassword.ts";
 import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { generateJWT } from "../helpers/generatedJWT.ts";
+import { generateId } from "../helpers/generatedIdToken.ts";
 
 //Extend del modelo de user
 interface State {
@@ -98,8 +99,11 @@ const attempSignup = async (userData: User) => {
     const newUser = { ...userData };
     newUser.password = await hashPassword(userData.password);
     newUser.created_at = new Date();
+    newUser.token = generateId();
     await client.queryObject(
-      `INSERT INTO users (NAME, EMAIL, PASSWORD, TOKEN, CREATED_AT) VALUES ($1,$2,$3,$4,$5)`,
+      `INSERT INTO users (NAME, EMAIL, PASSWORD, TOKEN, CREATED_AT) 
+      VALUES ($1,$2,$3,$4,$5) 
+      RETURNING id`,
       [
         newUser.name,
         newUser.email,
