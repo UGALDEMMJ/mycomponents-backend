@@ -6,6 +6,7 @@ import { hashPassword } from "../helpers/hashearPassword.ts";
 import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { generateJWT } from "../helpers/generatedJWT.ts";
 import { generateId } from "../helpers/generatedIdToken.ts";
+import { emailRegister } from "../helpers/emailAuth.ts";
 
 //Extend del modelo de user
 interface State {
@@ -112,6 +113,7 @@ const attempSignup = async (userData: User) => {
         newUser.created_at,
       ],
     );
+    emailRegister(newUser);
   } catch (error) {
     console.error("Error inserting the user to the database", error);
     return null;

@@ -1,1 +1,27 @@
+# Ignorar las dependencias descargadas por Deno
+.deno_dir/
+
+# Ignorar caché
+.cache/
+
+# Archivos de configuración de editores de código
+.vscode/
+.idea/
+
+# Archivos temporales
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+
+# Archivos generados (build, dist, etc.)
+/dist/
+/build/
+
+# Archivos de entorno (secrets, configuración local)
+.env
 .env/
+.env.local
+
+# Logs
+*.log
