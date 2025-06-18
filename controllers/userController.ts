@@ -175,7 +175,6 @@ const authUser = async (ctx: Context) => {
 
       ctx.response.body = {
         id: user.id,
-        name: user.name,
         email: user.email,
         token: await generateJWT(user.id),
       };

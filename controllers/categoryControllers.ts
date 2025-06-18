@@ -2,7 +2,6 @@ import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { getClient } from "../config/db.ts";
 import { Category } from "../models/Category.ts";
 
-
 const addCategories = async (ctx: Context) => {
   const body = await ctx.request.body.json();
   const { name } = body;
@@ -27,7 +26,10 @@ const addCategories = async (ctx: Context) => {
 };
 
 //Consulta post primero necesito el parametro a buscar y luego la row
-const findCategory = async (param: string,column: string,): Promise<Category | null> => {
+const findCategory = async (
+  param: string,
+  column: string,
+): Promise<Category | null> => {
   let client;
   try {
     client = await getClient();
@@ -55,7 +57,7 @@ const findCategory = async (param: string,column: string,): Promise<Category | n
   } catch (error) {
     console.log("Error finding the category", error);
     return null;
-  }finally{
+  } finally {
     client?.release();
   }
 };
@@ -81,7 +83,7 @@ const attempAddCategory = async (categoryData: Category) => {
   }
 };
 
-const updateCategory = async (ctx:Context) => {
+const updateCategory = async (ctx: Context) => {
   const body = await ctx.request.body.json();
   const { id } = body;
   const column: string = "id";
@@ -98,17 +100,17 @@ const updateCategory = async (ctx:Context) => {
 
   try {
     client = await getClient();
-    const updateCategory ={
+    const updateCategory = {
       name: body.name || categoryExist.name,
-      created_at: body.created_at || categoryExist.created_at
-    } 
+      created_at: body.created_at || categoryExist.created_at,
+    };
     await client.queryObject(
-      `UPDATE categories SET name = $1, created_at = $2 WHERE id = $3`, 
+      `UPDATE categories SET name = $1, created_at = $2 WHERE id = $3`,
       [
-        updateCategory.name, 
+        updateCategory.name,
         updateCategory.created_at,
-        id
-      ]
+        id,
+      ],
     );
     ctx.response.status = 200;
     ctx.response.body = { message: "Category updated successfully" };
@@ -116,13 +118,12 @@ const updateCategory = async (ctx:Context) => {
     console.error("Error updating the category in the database", error);
     ctx.response.status = 500;
     ctx.response.body = { message: "Error updating category" };
-  }finally{
+  } finally {
     client?.release();
   }
 };
 
-const deleteCategory = async (ctx:Context)=>{
-
+const deleteCategory = async (ctx: Context) => {
   const body = await ctx.request.body.json();
   const { id } = body;
   const column: string = "id";
@@ -140,10 +141,10 @@ const deleteCategory = async (ctx:Context)=>{
   try {
     client = await getClient();
     await client.queryObject(
-      `DELETE FROM categories WHERE id = $1`, 
+      `DELETE FROM categories WHERE id = $1`,
       [
-        id
-      ]
+        id,
+      ],
     );
     ctx.response.status = 200;
     ctx.response.body = { message: "Category deleted successfully" };
@@ -151,33 +152,32 @@ const deleteCategory = async (ctx:Context)=>{
     console.error("Error deleting the category in the database", error);
     ctx.response.status = 500;
     ctx.response.body = { message: "Error deleting category" };
-  }finally{
-    client?.release();
-  }
-}
-
-const getCategory = async (): Promise<Category[] | null> => {
-  let client;
-  try {
-    client = await getClient();
-    const result = await client.queryObject<Category>(
-      `SELECT * FROM tags LIMIT 10`,
-    );
-    if (result.rows.length > 0) {
-      return result.rows.map((dbCategory) => ({
-        id: dbCategory.id,
-        name: dbCategory.name,
-        created_at: dbCategory.created_at,
-      }));
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.log("Error finding the category", error);
-    return null;
   } finally {
     client?.release();
   }
 };
 
-export { addCategories, updateCategory, deleteCategory, getCategory };
+const getCategory = async (ctx: Context) => {
+  let client;
+  try {
+    client = await getClient();
+    const result = await client.queryObject<Category>(
+      `SELECT * FROM categories LIMIT 10`,
+    );
+    const categories = result.rows.map((dbCategory) => ({
+      id: dbCategory.id,
+      name: dbCategory.name,
+      created_at: dbCategory.created_at,
+    }));
+    ctx.response.status = 200;
+    ctx.response.body = categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to fetch categories" };
+  } finally {
+    client?.release();
+  }
+};
+
+export { addCategories, deleteCategory, getCategory, updateCategory };

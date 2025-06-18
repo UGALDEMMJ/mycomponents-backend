@@ -6,7 +6,7 @@ const routerCategories = new Router({prefix: "/api/categories"});
 
 //Rutas publicas
 routerCategories
-.post('/dashboard',getCategory)
+.get('/dashboard',getCategory)
 
 //Rutas privadas
 routerCategories

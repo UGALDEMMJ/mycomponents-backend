@@ -186,29 +186,28 @@ const deletePost = async (ctx: RouterContext<"/:id">) => {
   }
 };
 
-const getComponents = async (): Promise<Component[] | null> => {
+const getComponents = async (ctx: Context) => {
   let client;
   try {
     client = await getClient();
     const result = await client.queryObject<Component>(
       `SELECT * FROM components LIMIT 10`,
     );
-    if (result.rows.length > 0) {
-      return result.rows.map((dbComponent) => ({
-        id: dbComponent.id,
-        user_id: dbComponent.user_id,
-        category_id: dbComponent.category_id,
-        name: dbComponent.name,
-        description: dbComponent.description,
-        code: dbComponent.code,
-        created_at: dbComponent.created_at,
-      }));
-    } else {
-      return null;
-    }
+    const components = result.rows.map((dbComponent) => ({
+      id: dbComponent.id,
+      user_id: dbComponent.user_id,
+      category_id: dbComponent.category_id,
+      name: dbComponent.name,
+      description: dbComponent.description,
+      code: dbComponent.code,
+      created_at: dbComponent.created_at,
+    }));
+    ctx.response.status = 200;
+    ctx.response.body = components;
   } catch (error) {
-    console.log("Error finding the post", error);
-    return null;
+    console.error("Error fetching components:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to fetch components" };
   } finally {
     client?.release();
   }

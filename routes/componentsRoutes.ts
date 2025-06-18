@@ -8,7 +8,7 @@ const routerComponents = new Router({prefix: "/api/components"});
 
 //Rutas Publicas
 routerComponents
-.post('/dashboard', getComponents)
+.get('/dashboard', getComponents)
 
 //Rutas privadas
 routerComponents

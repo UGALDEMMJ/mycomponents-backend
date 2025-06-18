@@ -6,7 +6,7 @@ const routerTags = new Router({prefix: "/api/tags"});
 
 //Rutas publicas
 routerTags
-.post('/dashboard', getTags)
+.get('/dashboard', getTags)
 
 //Rutas privadas
 routerTags
