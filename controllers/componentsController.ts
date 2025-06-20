@@ -150,20 +150,19 @@ const updatePost = async (ctx: RouterContext<"/:id">) => {
 };
 
 const deletePost = async (ctx: RouterContext<"/:id">) => {
+
   const userSessionId = ctx.params.id || "";
   const body = await ctx.request.body.json();
-  const { id } = body;
+  const { idPost } = body;
   const column: string = "id";
-
-  const postExist = await findPost(id, column);
+  console.log(idPost)
+  const postExist = await findPost(idPost, column);
 
   if (!postExist) {
     ctx.response.status = 404;
     ctx.response.body = { message: "Post not found" };
     return;
   }
-  console.log(userSessionId);
-  console.log(postExist.user_id);
   let client;
   if (userSessionId === postExist.user_id) {
     try {
@@ -171,7 +170,7 @@ const deletePost = async (ctx: RouterContext<"/:id">) => {
       await client.queryObject(
         `DELETE FROM components WHERE id = $1`,
         [
-          id,
+          idPost,
         ],
       );
       ctx.response.status = 200;
