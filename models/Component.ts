@@ -6,4 +6,5 @@ export interface Component{
     description:string;
     code:string;
     created_at: Date;
+    tags?: number[];
 }

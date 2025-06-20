@@ -38,12 +38,10 @@ const findPost = async (
     if (!client) {
       throw new Error("Database client is no available.");
     }
-
     const result = await client.queryObject<Component>(
       `SELECT id, user_id, category_id, name, description, code, created_at FROM components WHERE ${column} = $1 LIMIT 1`,
       [param],
     );
-
     if (result.rows.length > 0) {
       const dbComponent = result.rows[0];
       const component: Component = {
@@ -77,8 +75,8 @@ const attempAddPost = async (postData: Component, ctx: Context) => {
       user_id: userInfo.id,
       created_at: new Date(),
     };
-    await client.queryObject(
-      `INSERT INTO components (user_id, category_id, name, description, code, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+    const result = await client.queryObject<{ id: string }>(
+      `INSERT INTO components (user_id, category_id, name, description, code, created_at) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
       [
         newPostData.user_id,
         newPostData.category_id,
@@ -88,6 +86,20 @@ const attempAddPost = async (postData: Component, ctx: Context) => {
         newPostData.created_at,
       ],
     );
+
+    if (result.rows.length > 0) {
+      const newComponentId = result.rows[0].id;
+      if (Array.isArray(postData.tags)) {
+        for (const tagId of postData.tags) {
+          await client.queryObject(
+            `INSERT INTO component_tags (component_id, tag_id) VALUES ($1, $2)`,
+            [newComponentId, tagId],
+          );
+        }
+      }
+    } else {
+      return null;
+    }
   } catch (error) {
     console.error("Error inserting the post in the database", error);
     return null;
@@ -98,90 +110,71 @@ const attempAddPost = async (postData: Component, ctx: Context) => {
 };
 
 const updatePost = async (ctx: RouterContext<"/:id">) => {
-  const userSessionId = ctx.params.id || "";
-  const body = await ctx.request.body.json();
-  const { id } = body;
-  const column: string = "id";
+  let client;
+  try {
+    const body = await ctx.request.body.json();
+    client = await getClient();
+    // 1. Actualiza el componente (NO lo elimines)
+    await client.queryObject(
+      `UPDATE components SET category_id = $1, name = $2, description = $3, code = $4 WHERE id = $5`,
+      [
+        body.category_id,
+        body.name,
+        body.description,
+        body.code,
+        body.id,
+      ],
+    );
 
-  const postExist = await findPost(id, column);
+    // 2. Elimina relaciones viejas de tags
+    await client.queryObject(
+      `DELETE FROM component_tags WHERE component_id = $1`,
+      [body.id],
+    );
 
-  if (!postExist) {
-    ctx.response.status = 404;
-    ctx.response.body = { message: "Post not found" };
-    return;
-  }
-  console.log(userSessionId);
-  console.log(postExist.user_id);
-  if (userSessionId === postExist.user_id) {
-    let client;
-
-    try {
-      client = await getClient();
-      const updatePost = {
-        name: body.name || postExist.name,
-        category_id: body.category_id || postExist.category_id,
-        description: body.description || postExist.description,
-        code: body.code || postExist.code,
-        created_at: body.created_at || postExist.created_at,
-      };
-      await client.queryObject(
-        `UPDATE components SET name = $1, category_id = $2, description = $3, code = $4, created_at = $5  WHERE id = $6`,
-        [
-          updatePost.name,
-          updatePost.category_id,
-          updatePost.description,
-          updatePost.code,
-          updatePost.created_at,
-          id,
-        ],
-      );
-      ctx.response.status = 200;
-      ctx.response.body = { message: "Post updated successfully" };
-    } catch (error) {
-      console.error("Error updating the post in the database", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error updating post" };
-    } finally {
-      client?.release();
+    // 3. Inserta nuevas relaciones de tags
+    if (Array.isArray(body.tags)) {
+      for (const tagId of body.tags) {
+        await client.queryObject(
+          `INSERT INTO component_tags (component_id, tag_id) VALUES ($1, $2)`,
+          [body.id, tagId],
+        );
+      }
     }
-  } else {
-    return ctx.response.body = { msg: "Invalid action" };
+
+    ctx.response.status = 200;
+    ctx.response.body = { msg: "Component updated successfully" };
+  } catch (error) {
+    console.error("Error updating the component", error);
+    ctx.response.status = 500;
+    ctx.response.body = { msg: "Error updating component" };
+  } finally {
+    client?.release();
   }
 };
 
 const deletePost = async (ctx: RouterContext<"/:id">) => {
-
-  const userSessionId = ctx.params.id || "";
-  const body = await ctx.request.body.json();
-  const { idPost } = body;
-  const column: string = "id";
-  console.log(idPost)
-  const postExist = await findPost(idPost, column);
-
-  if (!postExist) {
-    ctx.response.status = 404;
-    ctx.response.body = { message: "Post not found" };
-    return;
-  }
   let client;
-  if (userSessionId === postExist.user_id) {
-    try {
-      client = await getClient();
-      await client.queryObject(
-        `DELETE FROM components WHERE id = $1`,
-        [
-          idPost,
-        ],
-      );
-      ctx.response.status = 200;
-      ctx.response.body = { message: "Post deleted successfully" };
-    } catch (error) {
-      console.error("Error deleting the post in the database", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error deleting post" };
-    } finally {
-      client?.release();
-    }
+  try {
+    const body = await ctx.request.body.json();
+    console.log(body)
+    const { idPost } = body;
+    client = await getClient();
+
+    // Elimina el componente
+    await client.queryObject(
+      `DELETE FROM components WHERE id = $1`,
+      [idPost]
+    );
+
+    ctx.response.status = 200;
+    ctx.response.body = { msg: "Component deleted successfully" };
+  } catch (error) {
+    console.error("Error deleting the component", error);
+    ctx.response.status = 500;
+    ctx.response.body = { msg: "Error deleting component" };
+  } finally {
+    client?.release();
   }
 };
 
