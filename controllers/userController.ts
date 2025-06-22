@@ -185,4 +185,27 @@ const authUser = async (ctx: Context) => {
     ctx.response.body = { msg: "Error in auth process" };
   }
 };
-export { signupUser, verifyUser, authUser, getProfile, };
+
+const getUsers= async (ctx: Context) => {
+  let client;
+  try {
+    client = await getClient();
+    const result = await client.queryObject<User>(
+      `SELECT * FROM users LIMIT 10`,
+    );
+    const users = result.rows.map((dbUser) => ({
+      id: dbUser.id,
+      name: dbUser.name,
+    }));
+
+    ctx.response.status = 200;
+    ctx.response.body = users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to fetch users" };
+  } finally {
+    client?.release();
+  }
+};
+export { signupUser, verifyUser, authUser, getProfile, getUsers };

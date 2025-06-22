@@ -182,20 +182,35 @@ const getComponents = async (ctx: Context) => {
   let client;
   try {
     client = await getClient();
-    const result = await client.queryObject<Component>(
-      `SELECT * FROM components LIMIT 10`,
-    );
-    const components = result.rows.map((dbComponent) => ({
-      id: dbComponent.id,
-      user_id: dbComponent.user_id,
-      category_id: dbComponent.category_id,
-      name: dbComponent.name,
-      description: dbComponent.description,
-      code: dbComponent.code,
-      created_at: dbComponent.created_at,
-    }));
+
+    const result = await client.queryObject<{
+      id: number;
+      user_id: number;
+      category_id: number;
+      name: string;
+      description: string;
+      code: string;
+      created_at: string;
+      tags: { id: number; name: string }[];
+    }>(`
+      SELECT 
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object('id', t.id, 'name', t.name)
+          ) FILTER (WHERE t.id IS NOT NULL),
+          '[]'
+        ) AS tags
+      FROM components c
+      LEFT JOIN component_tags ct ON c.id = ct.component_id
+      LEFT JOIN tags t ON ct.tag_id = t.id
+      GROUP BY c.id
+      ORDER BY c.created_at DESC
+      LIMIT 10
+    `);
+
     ctx.response.status = 200;
-    ctx.response.body = components;
+    ctx.response.body = result.rows;
   } catch (error) {
     console.error("Error fetching components:", error);
     ctx.response.status = 500;

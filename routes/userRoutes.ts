@@ -1,5 +1,5 @@
 import { Router } from "https://deno.land/x/oak@v17.1.4/mod.ts";
-import { signupUser, verifyUser, authUser, getProfile } from "../controllers/userController.ts";
+import { signupUser, verifyUser, authUser, getProfile, getUsers } from "../controllers/userController.ts";
 import { checkAuth} from "../middleware/authMiddleware.ts" 
 const routerUsers = new Router({prefix: "/api/user"});
 
@@ -8,6 +8,7 @@ routerUsers
 .post('/signup',signupUser)
 .get('/verify/:token',verifyUser)
 .post('/login',authUser)
+.get('/users',getUsers)
 
 
 //Rutas privadas
