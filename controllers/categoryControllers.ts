@@ -162,7 +162,7 @@ const getCategory = async (ctx: Context) => {
   try {
     client = await getClient();
     const result = await client.queryObject<Category>(
-      `SELECT * FROM categories LIMIT 10`,
+      `SELECT * FROM categories`,
     );
     const categories = result.rows.map((dbCategory) => ({
       id: dbCategory.id,

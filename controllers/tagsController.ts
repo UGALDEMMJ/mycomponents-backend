@@ -155,7 +155,7 @@ const getTags = async (ctx: Context) => {
   try {
     client = await getClient();
     const result = await client.queryObject<Tags>(
-      `SELECT * FROM tags LIMIT 10`,
+      `SELECT * FROM tags`,
     );
     const tags = result.rows.map((dbTag) => ({
       id: dbTag.id,
