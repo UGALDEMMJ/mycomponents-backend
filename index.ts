@@ -5,12 +5,10 @@ import { routerComponents } from "./routes/componentsRoutes.ts"
 import { routerCategories } from "./routes/categoryRoutes.ts";
 import { routerTags } from "./routes/tagsRoutes.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
-import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 
 try {
     connectDB();
     const app = new Application();
-    serve((_req: Request) => new Response("Hello from Deno backend!"));
     app.use(oakCors({ origin: "http://localhost:5173"}));
     app.use(routerUsers.routes());
     app.use(routerUsers.allowedMethods());

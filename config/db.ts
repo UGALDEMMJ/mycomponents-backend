@@ -19,7 +19,6 @@ async function connectDB() {
         console.log("Conectado a la db con 10 pools")
     } catch (error) {
         console.log("Unable to connect to databse: " + error);
-        Deno.exit(1);
     }
 }
 
