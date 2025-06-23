@@ -13,8 +13,11 @@ async function connectDB() {
             user: env.DB_USER,
             password: env.DB_PASSWORD,
             hostname: env.DB_HOST,
+            database: env.DB_NAME,
             port: env.DB_PORT,
-            database: env.DB_NAME
+            tls:{
+                enabled:true,
+            },
         }, 10);
         console.log("Conectado a la db con 10 pools")
     } catch (error) {
