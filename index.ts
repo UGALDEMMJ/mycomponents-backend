@@ -9,7 +9,7 @@ import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts"
 try {
     connectDB();
     const app = new Application();
-    app.use(oakCors({ origin: "http://localhost:5173"}));
+    app.use(oakCors({ origin: "https://mycomponents-frontend.vercel.app/"}));
     app.use(routerUsers.routes());
     app.use(routerUsers.allowedMethods());
     app.use(routerComponents.routes());
