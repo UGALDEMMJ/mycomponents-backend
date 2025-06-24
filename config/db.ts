@@ -9,17 +9,31 @@ async function connectDB() {
     const env = await load();
 
     try {
-        pool = new Pool ({
+        const poolOptions: {
+            user: string;
+            password: string;
+            hostname: string;
+            database: string;
+            port: number;
+            tls?: { enabled: boolean };
+        } = {
             user: env.DB_USER,
             password: env.DB_PASSWORD,
             hostname: env.DB_HOST,
             database: env.DB_NAME,
-            port: env.DB_PORT,
-            tls:{
-                enabled:true,
-            },
-        }, 10);
-        console.log("Conectado a la db con 10 pools")
+            port: Number(env.DB_PORT),
+        };
+
+        // Solo agrega TLS si no es un socket
+        if (
+            env.DB_HOST &&
+            !env.DB_HOST.startsWith("/") // No es un socket
+        ) {
+            poolOptions.tls = { enabled: true };
+        }
+
+        pool = new Pool(poolOptions, 10);
+        console.log("Conectado a la db con 10 pools");
     } catch (error) {
         console.log("Unable to connect to databse: " + error);
     }
