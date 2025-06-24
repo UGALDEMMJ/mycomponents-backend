@@ -2,7 +2,7 @@ import { Pool } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 
 let pool: Pool;
 
-async function connectDB() {
+function connectDB() {
     try {
         const poolOptions: {
             user: string;
