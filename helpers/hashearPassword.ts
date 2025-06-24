@@ -1,12 +1,11 @@
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import bcrypt from "https://deno.land/x/bcryptjs@2.4.3/mod.ts";
 
-export async function hashPassword(normalPassword:string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(normalPassword, salt);
-    return hash;
+export async function hashPassword(normalPassword: string): Promise<string> {
+    // bcryptjs es síncrono, pero puedes envolverlo en Promise para mantener la API
+    return Promise.resolve(bcrypt.hashSync(normalPassword, 10));
 }
 
-export async function verifyPassword(normalPassword:string, hashedPassword:string): Promise<boolean> {
-    return await bcrypt.compare(normalPassword, hashedPassword);
+export async function verifyPassword(normalPassword: string, hashedPassword: string): Promise<boolean> {
+    return Promise.resolve(bcrypt.compareSync(normalPassword, hashedPassword));
 }
 
