@@ -1,13 +1,8 @@
-import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 import { Pool } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
-
 
 let pool: Pool;
 
 async function connectDB() {
-
-    const env = await load();
-
     try {
         const poolOptions: {
             user: string;
@@ -17,17 +12,16 @@ async function connectDB() {
             port: number;
             tls?: { enabled: boolean };
         } = {
-            user: env.DB_USER,
-            password: env.DB_PASSWORD,
-            hostname: env.DB_HOST,
-            database: env.DB_NAME,
-            port: Number(env.DB_PORT),
+            user: Deno.env.get("DB_USER") ?? "",
+            password: Deno.env.get("DB_PASSWORD") ?? "",
+            hostname: Deno.env.get("DB_HOST") ?? "",
+            database: Deno.env.get("DB_NAME") ?? "",
+            port: Number(Deno.env.get("DB_PORT") ?? 5432),
         };
 
-        // Solo agrega TLS si no es un socket
         if (
-            env.DB_HOST &&
-            !env.DB_HOST.startsWith("/") // No es un socket
+            poolOptions.hostname &&
+            !poolOptions.hostname.startsWith("/")
         ) {
             poolOptions.tls = { enabled: true };
         }
