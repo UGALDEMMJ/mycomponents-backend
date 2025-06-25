@@ -7,6 +7,7 @@ import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { generateJWT } from "../helpers/generatedJWT.ts";
 import { generateId } from "../helpers/generatedIdToken.ts";
 import { emailRegister } from "../helpers/emailAuth.ts";
+import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/src/main.ts";
 
 //Extend del modelo de user
 interface State {
@@ -166,7 +167,7 @@ const authUser = async (ctx: Context) => {
       return
     } else {
       console.log(user)
-      const correctPassword = await compare(password, user.password);
+      const correctPassword = compareSync(password, user.password);
       if (!correctPassword) {
         ctx.response.status = 403;
         ctx.response.body = { msg: "The password is incorrect" };
