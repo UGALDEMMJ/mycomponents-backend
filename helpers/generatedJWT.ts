@@ -16,11 +16,10 @@ async function getKey(secret:string):Promise<CryptoKey> {
 
 const  generateJWT = async (id:string) => {
 
-    const env = await load();
-    if (!env.SECRET) {
+    if (Deno.env.get("SECRET")??"") {
         throw new Error("SECRET key is not defined in the environment.");
     }
-    const secretKey = await getKey(env.SECRET);
+    const secretKey = await getKey(Deno.env.get("SECRET")??"");
 
     return await create(
         {alg: "HS512", typ:"JWT"},
