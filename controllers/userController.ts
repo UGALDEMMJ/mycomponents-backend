@@ -3,11 +3,10 @@ import { RouterContext } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { getClient } from "../config/db.ts";
 import { User } from "../models/User.ts";
 import { hashPassword } from "../helpers/hashearPassword.ts";
-import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { generateJWT } from "../helpers/generatedJWT.ts";
 import { generateId } from "../helpers/generatedIdToken.ts";
 import { emailRegister } from "../helpers/emailAuth.ts";
-import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/src/main.ts";
+import { verifyPassword } from "../helpers/hashearPassword.ts"
 
 //Extend del modelo de user
 interface State {
@@ -167,7 +166,7 @@ const authUser = async (ctx: Context) => {
       return
     } else {
       console.log(user)
-      const correctPassword = compareSync(password, user.password);
+      const correctPassword = verifyPassword(password, user.password);
       if (!correctPassword) {
         ctx.response.status = 403;
         ctx.response.body = { msg: "The password is incorrect" };
