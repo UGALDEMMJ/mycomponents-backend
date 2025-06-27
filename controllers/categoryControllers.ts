@@ -1,6 +1,7 @@
 import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { getClient } from "../config/db.ts";
 import { Category } from "../models/Category.ts";
+import { RouterContext } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 
 const addCategories = async (ctx: Context) => {
   const body = await ctx.request.body.json();
@@ -180,4 +181,51 @@ const getCategory = async (ctx: Context) => {
   }
 };
 
-export { addCategories, deleteCategory, getCategory, updateCategory };
+const getCategoriesPost = async (ctx: RouterContext<"/posts/:id">) => {
+  let client;
+
+  const idCategory = ctx.params.id || "";
+  const categoryExist = await findCategory(idCategory, "id");
+
+  if (!categoryExist) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Category not found" };
+    return;
+  }
+
+  try {
+    client = await getClient();
+    const result = await client.queryObject(`
+  SELECT 
+    c.*,
+    COALESCE(
+      json_agg(
+        json_build_object('id', t.id, 'name', t.name)
+      ) FILTER (WHERE t.id IS NOT NULL),
+      '[]'
+    ) AS tags
+  FROM components c
+  LEFT JOIN component_tags ct ON c.id = ct.component_id
+  LEFT JOIN tags t ON ct.tag_id = t.id
+  WHERE c.category_id = $1
+  GROUP BY c.id
+  ORDER BY c.created_at DESC
+`, [idCategory]);
+    ctx.response.status = 200;
+    ctx.response.body = result.rows;
+  } catch (error) {
+    console.error("Error fetching categories posts:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to fetch categories post" };
+  } finally {
+    client?.release();
+  }
+};
+
+export {
+  addCategories,
+  deleteCategory,
+  getCategoriesPost,
+  getCategory,
+  updateCategory,
+};
