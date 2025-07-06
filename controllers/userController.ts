@@ -7,6 +7,7 @@ import { generateJWT } from "../helpers/generatedJWT.ts";
 import { generateId } from "../helpers/generatedIdToken.ts";
 import { emailRegister } from "../helpers/emailAuth.ts";
 import { verifyPassword } from "../helpers/hashearPassword.ts"
+import { setTimeout } from "node:timers/promises";
 
 //Extend del modelo de user
 interface State {
@@ -168,8 +169,9 @@ const authUser = async (ctx: Context) => {
       console.log(user)
       const correctPassword = verifyPassword(password, user.password);
       if (!correctPassword) {
+        await setTimeout(5000);
         ctx.response.status = 403;
-        ctx.response.body = { msg: "The password is incorrect" };
+        ctx.response.body = { msg: "Error Login in"};
         return
       }
 

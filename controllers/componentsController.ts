@@ -220,4 +220,33 @@ const getComponents = async (ctx: Context) => {
   }
 };
 
-export { addComponents, deletePost, getComponents, updatePost };
+const incrementComponentClicks = async (ctx: RouterContext<"/clicks/:id">) => {
+  const componentId = ctx.params.id;
+  let client;
+
+  if (!componentId) {
+    ctx.response.status = 400;
+    ctx.response.body = { msg: "Component ID is required" };
+    return;
+  }
+
+  try {
+    client = await getClient();
+
+    await client.queryObject(
+      `UPDATE components SET clicks = COALESCE(clicks, 0) + 1 WHERE id = $1`,
+      [componentId],
+    );
+
+    ctx.response.status = 200;
+    ctx.response.body = { msg: "Click fetched succesfully" };
+  } catch (error) {
+    console.error("Error fetching clicks", error);
+    ctx.response.status = 500;
+    ctx.response.body = { msg: "Error fetching clicks" };
+  } finally {
+    client?.release();
+  }
+};
+
+export { addComponents, deletePost, getComponents, updatePost, incrementComponentClicks };

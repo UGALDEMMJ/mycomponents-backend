@@ -7,4 +7,5 @@ export interface Component{
     code:string;
     created_at: Date;
     tags?: number[];
+    clicks?: number;
 }
