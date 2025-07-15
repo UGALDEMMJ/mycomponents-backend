@@ -4,6 +4,8 @@ import { verify } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { getKey } from "../helpers/generatedJWT.ts";
 import { getClient } from "../config/db.ts";
 
+//Cambiar antes del commit
+
 export const checkAuth = async (ctx: Context, next: Next) => {
   let token;
   let client;
@@ -13,13 +15,14 @@ export const checkAuth = async (ctx: Context, next: Next) => {
     try {
       //Extraer el token del header
       token = authHeader.split(" ")[1];
+      
+      const secret = await getKey(Deno.env.get("SECRET")??"thsiisasecretvalue");
 
       //Verificar el token
-      if (!Deno.env.get("SECRET")) {
+      if (!secret) {
         throw new Error("SECRET key is not defined in the environment.");
       }
 
-      const secret = await getKey(Deno.env.get("SECRET")!);
       const decode = await verify(token, secret);
       //Busca el user en la db
       client = await getClient();
