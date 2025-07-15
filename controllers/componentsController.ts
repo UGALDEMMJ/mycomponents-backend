@@ -249,4 +249,54 @@ const incrementComponentClicks = async (ctx: RouterContext<"/clicks/:id">) => {
   }
 };
 
-export { addComponents, deletePost, getComponents, updatePost, incrementComponentClicks };
+const getMostUsed = async (ctx: Context) => {
+  let client;
+  try {
+    client = await getClient();
+
+    const result = await client.queryObject<{
+      id: number;
+      user_id: number;
+      category_id: number;
+      name: string;
+      description: string;
+      code: string;
+      created_at: string;
+      clicks: number;
+      tags: { id: number; name: string }[];
+    }>(`
+      SELECT 
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object('id', t.id, 'name', t.name)
+          ) FILTER (WHERE t.id IS NOT NULL),
+          '[]'
+        ) AS tags
+      FROM components c
+      LEFT JOIN component_tags ct ON c.id = ct.component_id
+      LEFT JOIN tags t ON ct.tag_id = t.id
+      GROUP BY c.id
+      ORDER BY c.clicks DESC
+      LIMIT 10
+    `);
+
+    ctx.response.status = 200;
+    ctx.response.body = result.rows;
+  } catch (error) {
+    console.error("Error fetching components:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to fetch components" };
+  } finally {
+    client?.release();
+  }
+};
+
+export { 
+  addComponents, 
+  deletePost, 
+  getComponents, 
+  updatePost, 
+  incrementComponentClicks, 
+  getMostUsed 
+};

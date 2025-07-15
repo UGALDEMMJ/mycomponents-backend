@@ -1,14 +1,21 @@
 import { Router } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { checkAuth } from "../middleware/authMiddleware.ts";
-import { addComponents, updatePost, deletePost, getComponents, incrementComponentClicks } from "../controllers/componentsController.ts";
+import { 
+    addComponents, 
+    updatePost, 
+    deletePost, 
+    getComponents, 
+    incrementComponentClicks,
+    getMostUsed 
+} from "../controllers/componentsController.ts";
 
 
 const routerComponents = new Router({prefix: "/api/components"});
 
-
 //Rutas Publicas
 routerComponents
 .get('/dashboard', getComponents)
+.get('/mostused', getMostUsed)
 
 //Rutas privadas
 routerComponents
